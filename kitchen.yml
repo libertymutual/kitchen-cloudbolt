@@ -1,0 +1,10 @@
+---
+driver:
+  name: 'cloudbolt'
+  group_id: 1
+  owner_id: 1
+  osbuild_id: 1
+  app_ids: [1]
+  params: []
+  hostname: ''
+  preconfig: ''
