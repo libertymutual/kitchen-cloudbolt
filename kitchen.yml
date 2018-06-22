@@ -1,10 +1,16 @@
 ---
 driver:
   name: 'cloudbolt'
+  wait: false
   group_id: 1
-  owner_id: 1
-  osbuild_id: 1
-  app_ids: [1]
-  params: []
-  hostname: ''
-  preconfig: ''
+  deploy_items:
+  - blueprint: "/api/v2/blueprints/1"
+    blueprint-items-arguments:
+      build-item-Server:
+        attributes:
+          quantity: 1
+        parameters:
+          cpu-cnt: 1
+        environment: "/api/v2/environments/55"
+        os-build: "/api/v2/os-builds/1"
+    resource-name: ''

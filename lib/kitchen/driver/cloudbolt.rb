@@ -15,15 +15,9 @@ module Kitchen
     class Cloudbolt < Kitchen::Driver::Base
       default_config :proto, 'https'
       default_config :port, 443
-      default_config :wait, True
+      default_config :wait, false
       default_config :group_id, nil
-      default_config :owner_id, nil
-      default_config :osbuild_id, nil
-      default_config :app_ids, nil
-      default_config :params, nil
-      # Maybe we should required use of hostname templates
-      default_config :hostname, nil
-      default_config :preconfig, nil
+      default_config :deploy_items, nil
 
       default_config :host do
         ENV['CLOUDBOLT_HOST']
@@ -41,41 +35,41 @@ module Kitchen
       required_config :user
       required_config :pass
       required_config :group_id
-      required_config :owner_id
-      required_config :osbuild_id
-      required_config :app_ids
-      required_config :params
-      required_config :hostname
-      required_config :preconfig
+      required_config :deploy_items
 
       def create(state)
-        # Assumes the output of cb_prov is the Server ID
-        server = connection.cb_prov(
+        # Assumes the output of cb_order_blueprint is the Server ID
+        # TODO Need to output server id and env id and store in state
+        server = connection.cb_order_blueprint(
           config[:group_id],
-          config[:env_id],
-          config[:owner_id],
-          config[:osbuild_id],
-          config[:app_ids],
-          config[:params],
-          config[:hostname],
-          config[:preconfigs],
+          config[:deploy_items],
           config[:wait])
+        server_id = server["_links"]["self"]["title"][/\d+/].to_i
+        env_id = server["items"]["deploy_items"][0]["blueprint-items-arguments"]["build-item-Server"]["environment"]
         state[:group_id] = config[:group_id]
-        state[:env_id] = config[:env_id]
-        state[:hostname] = config[:hostname]
-        state[:server_id] = server
+        state[:deploy_items] = config[:deploy_items]
+        state[:server_id] = server_id
+        state[:env_id] = env_id
         # Should lookup server metadata like IP, MAC, etc..
         # and store in state
       end
 
       def destroy(state)
-        destroy.cb_decom(
-          state[:group_id],
-          state[:env_id],
-          state[:server_id],
+        server_id = state['server_id']
+        env_id = state['env_id']
+
+        decom_item = Hash.new
+        decom_item['environment'] = "/api/v2/environments/#{env_id}"
+        decom_item['servers'] = ["/api/v2/servers/#{server_id}"]
+
+        decom_items = Array.new
+        decom_items << decom_item
+
+        destroy.cb_decom_blueprint(
+          state[:decom_items],
           config[:wait])
         state.delete(:server_id)
-        state.delete(:hostname)
+        state.delete(:env_id)
       end
 
       private
