@@ -16,6 +16,8 @@ module Kitchen
       default_config :proto, 'https'
       default_config :port, 443
       default_config :wait, false
+      default_config :wait_time, 5
+      default_config :domain, nil
       default_config :group_id, nil
       default_config :deploy_items, nil
 
@@ -36,40 +38,43 @@ module Kitchen
       required_config :pass
       required_config :group_id
       required_config :deploy_items
+      required_config :domain
 
       def create(state)
-        # Assumes the output of cb_order_blueprint is the Server ID
-        # TODO Need to output server id and env id and store in state
-        server = connection.cb_order_blueprint(
+        response = connection.order_blueprint(
           config[:group_id],
           config[:deploy_items],
-          config[:wait])
-        server_id = server["_links"]["self"]["title"][/\d+/].to_i
-        env_id = server["items"]["deploy_items"][0]["blueprint-items-arguments"]["build-item-Server"]["environment"]
+          config[:wait],
+          config[:wait_time])
+        order_id = response["_links"]["self"]["title"][/\d+/].to_i
+        server = connection.get_server_from_order(order_id)
+        hostname = server['hostname']
+        if not hostname.include? config[:domain]
+          state[:hostname] = hostname + "." + config[:domain]
+        else
+          state[:hostname] = hostname
+        end
+        state[:server_id] = server[:id]
         state[:group_id] = config[:group_id]
         state[:deploy_items] = config[:deploy_items]
-        state[:server_id] = server_id
-        state[:env_id] = env_id
-        # Should lookup server metadata like IP, MAC, etc..
-        # and store in state
       end
 
       def destroy(state)
         server_id = state['server_id']
-        env_id = state['env_id']
+        server = connection.get_server(server_id)
+        environment = server["_links"]["environment"]["href"]
 
         decom_item = Hash.new
-        decom_item['environment'] = "/api/v2/environments/#{env_id}"
+        decom_item['environment'] = environment
         decom_item['servers'] = ["/api/v2/servers/#{server_id}"]
 
         decom_items = Array.new
         decom_items << decom_item
 
-        destroy.cb_decom_blueprint(
+        connection.decom_blueprint(
           state[:decom_items],
           config[:wait])
         state.delete(:server_id)
-        state.delete(:env_id)
       end
 
       private

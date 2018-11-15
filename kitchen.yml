@@ -1,7 +1,9 @@
 ---
 driver:
   name: 'cloudbolt'
+  domain: "example.com"
   wait: false
+  wait_time: 5
   group_id: 1
   deploy_items:
   - blueprint: "/api/v2/blueprints/1"
