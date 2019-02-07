@@ -4,7 +4,8 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = 'kitchen-cloudbolt'
-  spec.version       = '1.2'
+  spec.version       = '1.3.0'
+  spec.date          = '2019-01-31'
   spec.authors       = ['Adam Kinney']
   spec.email         = ['akinney@cloudbolt.io']
   spec.description   = 'Chef Test Kitchen Driver for CloudBolt'
@@ -18,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'test-kitchen', '~> 1.17'
-  spec.add_dependency 'cloudbolt', '~> 0.0.3'
+  spec.add_dependency 'cloudbolt', '0.0.4'
 
   spec.add_development_dependency 'bundler', '~> 1.0'
   spec.add_development_dependency 'rake', '~> 10.0'
