@@ -47,8 +47,9 @@ module Kitchen
           config[:wait],
           config[:wait_time])
         order_id = response["_links"]["self"]["title"][/\d+/].to_i
+        state[:order_id] = order_id
         server = connection.get_server_from_order(order_id)
-        hostname = server['hostname']
+        hostname = server[:hostname]
         if not hostname.include? config[:domain]
           state[:hostname] = hostname + "." + config[:domain]
         else
@@ -60,20 +61,22 @@ module Kitchen
       end
 
       def destroy(state)
-        server_id = state['server_id']
+        server_id = state[:server_id]
         server = connection.get_server(server_id)
         environment = server["_links"]["environment"]["href"]
 
         decom_item = Hash.new
-        decom_item['environment'] = environment
-        decom_item['servers'] = ["/api/v2/servers/#{server_id}"]
+        decom_item[:environment] = environment
+        decom_item[:servers] = ["/api/v2/servers/#{server_id}"]
 
         decom_items = Array.new
         decom_items << decom_item
 
         connection.decom_blueprint(
-          state[:decom_items],
-          config[:wait])
+          config[:group_id],
+          decom_items,
+          config[:wait],
+          config[:wait_time])
         state.delete(:server_id)
       end
 
@@ -81,7 +84,7 @@ module Kitchen
 
       def connection()
         return @connection unless @connection.nil?
-        @connection = Cloudbolt.new(
+        @connection = CloudboltAPI::Cloudbolt.new(
           config[:proto],
           config[:host],
           config[:port],
@@ -93,4 +96,3 @@ module Kitchen
     end
   end
 end
-
