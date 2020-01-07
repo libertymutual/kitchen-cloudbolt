@@ -61,6 +61,8 @@ module Kitchen
       end
 
       def destroy(state)
+        return unless state[:server_id]
+        
         server_id = state[:server_id]
         server = connection.get_server(server_id)
         environment = server["_links"]["environment"]["href"]
